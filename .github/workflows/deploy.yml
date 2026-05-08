@@ -1,0 +1,48 @@
+name: Deploy to k3s
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push Docker image
+        env:
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t ${REGISTRY_HOST}:5000/sensor-realtime-view:${IMAGE_TAG} .
+          docker tag ${REGISTRY_HOST}:5000/sensor-realtime-view:${IMAGE_TAG} ${REGISTRY_HOST}:5000/sensor-realtime-view:latest
+          docker push ${REGISTRY_HOST}:5000/sensor-realtime-view:${IMAGE_TAG}
+          docker push ${REGISTRY_HOST}:5000/sensor-realtime-view:latest
+
+      - name: Deploy to k3s
+        env:
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          sudo kubectl create namespace sensor-realtime-view --dry-run=client -o yaml | sudo kubectl apply -f -
+          sed -e "s|__REGISTRY_HOST__|${REGISTRY_HOST}|g" \
+              -e "s|__IMAGE_TAG__|${IMAGE_TAG}|g" \
+              manifests/deployment.yaml | sudo kubectl apply -f - -n sensor-realtime-view
+          sudo kubectl apply -f manifests/service.yaml -n sensor-realtime-view
+          sudo kubectl rollout status deployment/sensor-realtime-view -n sensor-realtime-view --timeout=120s
+
+      - name: Notify Slack on success
+        if: success()
+        run: |
+          curl -s -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"✅ Deploy succeeded: `${{ github.ref_name }}` @ `${{ github.sha }}`"}'
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -s -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"❌ Deploy failed: `${{ github.ref_name }}` @ `${{ github.sha }}`"}'
