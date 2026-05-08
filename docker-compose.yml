@@ -1,0 +1,6 @@
+services:
+  view:
+    build: .
+    env_file: .env
+    ports:
+      - "8082:8080"

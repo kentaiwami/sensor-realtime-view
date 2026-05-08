@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensor Realtime</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 2rem;
+    }
+    #clock {
+      position: fixed;
+      top: 1rem;
+      right: 1.5rem;
+      font-size: 1.1rem;
+      color: #aaa;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      color: #ccc;
+    }
+    .readings {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .row {
+      font-size: 2rem;
+    }
+    .label {
+      color: #888;
+      font-size: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    .value {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .na {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="clock"></div>
+  <h1>Sensor Realtime</h1>
+  <div class="readings">
+    <div class="row">
+      <div class="label">におい (raw)</div>
+      <div class="value" id="smell">--</div>
+    </div>
+    <div class="row">
+      <div class="label">CO2 (ppm)</div>
+      <div class="value" id="co2">--</div>
+    </div>
+    <div class="row">
+      <div class="label">温度 (°C)</div>
+      <div class="value" id="temperature">--</div>
+    </div>
+    <div class="row">
+      <div class="label">湿度 (%)</div>
+      <div class="value" id="humidity">--</div>
+    </div>
+  </div>
+
+  <script>
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleString('ja-JP');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function fmt(v) {
+      return v != null ? Number(v).toFixed(1) : '<span class="na">--</span>';
+    }
+
+    async function fetchLatest() {
+      try {
+        const res = await fetch('/api/latest');
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById('smell').innerHTML = fmt(d.smell);
+        document.getElementById('co2').innerHTML = fmt(d.co2);
+        document.getElementById('temperature').innerHTML = fmt(d.temperature);
+        document.getElementById('humidity').innerHTML = fmt(d.humidity);
+      } catch (_) {}
+    }
+
+    setInterval(fetchLatest, 1000);
+    fetchLatest();
+  </script>
+</body>
+</html>
