@@ -10,4 +10,4 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
-      nodePort: 32226
+      nodePort: 32227
