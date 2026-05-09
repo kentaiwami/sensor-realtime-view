@@ -76,8 +76,8 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    function fmt(v) {
-      return v != null ? Number(v).toFixed(1) : '<span class="na">--</span>';
+    function fmt(v, decimals = 1) {
+      return v != null ? Number(v).toFixed(decimals) : '<span class="na">--</span>';
     }
 
     async function fetchLatest() {
@@ -85,7 +85,7 @@
         const res = await fetch('/api/latest');
         if (!res.ok) return;
         const d = await res.json();
-        document.getElementById('smell').innerHTML = fmt(d.smell);
+        document.getElementById('smell').innerHTML = fmt(d.smell, 4);
         document.getElementById('co2').innerHTML = fmt(d.co2);
         document.getElementById('temperature').innerHTML = fmt(d.temperature);
         document.getElementById('humidity').innerHTML = fmt(d.humidity);
