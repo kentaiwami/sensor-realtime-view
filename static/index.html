@@ -45,6 +45,15 @@
     .na {
       color: #555;
     }
+    .recorded-at {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.15rem;
+    }
+    @media (max-width: 480px) {
+      .value { font-size: 2rem; }
+      .recorded-at { font-size: 0.7rem; }
+    }
   </style>
 </head>
 <body>
@@ -54,18 +63,22 @@
     <div class="row">
       <div class="label">におい (raw)</div>
       <div class="value" id="smell">--</div>
+      <div class="recorded-at" id="smell-at"></div>
     </div>
     <div class="row">
       <div class="label">CO2 (ppm)</div>
       <div class="value" id="co2">--</div>
+      <div class="recorded-at" id="co2-at"></div>
     </div>
     <div class="row">
       <div class="label">温度 (°C)</div>
       <div class="value" id="temperature">--</div>
+      <div class="recorded-at" id="temperature-at"></div>
     </div>
     <div class="row">
       <div class="label">湿度 (%)</div>
       <div class="value" id="humidity">--</div>
+      <div class="recorded-at" id="humidity-at"></div>
     </div>
   </div>
 
@@ -80,15 +93,23 @@
       return v != null ? Number(v).toFixed(decimals) : '<span class="na">--</span>';
     }
 
+    function setAt(id, at) {
+      document.getElementById(id + '-at').textContent = at ? at : '';
+    }
+
     async function fetchLatest() {
       try {
         const res = await fetch('/api/latest');
         if (!res.ok) return;
         const d = await res.json();
-        document.getElementById('smell').innerHTML = fmt(d.smell, 4);
-        document.getElementById('co2').innerHTML = fmt(d.co2);
-        document.getElementById('temperature').innerHTML = fmt(d.temperature);
-        document.getElementById('humidity').innerHTML = fmt(d.humidity);
+        document.getElementById('smell').innerHTML = fmt(d.smell.value, 4);
+        document.getElementById('co2').innerHTML = fmt(d.co2.value);
+        document.getElementById('temperature').innerHTML = fmt(d.temperature.value);
+        document.getElementById('humidity').innerHTML = fmt(d.humidity.value);
+        setAt('smell', d.smell.recorded_at);
+        setAt('co2', d.co2.recorded_at);
+        setAt('temperature', d.temperature.recorded_at);
+        setAt('humidity', d.humidity.recorded_at);
       } catch (_) {}
     }
 

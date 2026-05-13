@@ -17,20 +17,27 @@ import (
 
 var db *sql.DB
 
-type Latest struct {
-	Smell       *float64 `json:"smell"`
-	CO2         *float64 `json:"co2"`
-	Temperature *float64 `json:"temperature"`
-	Humidity    *float64 `json:"humidity"`
+type SensorValue struct {
+	Value      *float64 `json:"value"`
+	RecordedAt *string  `json:"recorded_at"`
 }
 
-func latestValue(table string) *float64 {
+type Latest struct {
+	Smell       SensorValue `json:"smell"`
+	CO2         SensorValue `json:"co2"`
+	Temperature SensorValue `json:"temperature"`
+	Humidity    SensorValue `json:"humidity"`
+}
+
+func latestValue(table string) SensorValue {
 	var v float64
-	err := db.QueryRow("SELECT value FROM " + table + " ORDER BY recorded_at DESC LIMIT 1").Scan(&v)
+	var t time.Time
+	err := db.QueryRow("SELECT value, recorded_at FROM "+table+" ORDER BY recorded_at DESC LIMIT 1").Scan(&v, &t)
 	if err != nil {
-		return nil
+		return SensorValue{}
 	}
-	return &v
+	s := t.Format("2006/01/02 15:04:05")
+	return SensorValue{Value: &v, RecordedAt: &s}
 }
 
 func latestHandler(w http.ResponseWriter, r *http.Request) {
