@@ -22,11 +22,17 @@ type SensorValue struct {
 	RecordedAt *string  `json:"recorded_at"`
 }
 
+type PresenceValue struct {
+	Location   *string `json:"location"`
+	RecordedAt *string `json:"recorded_at"`
+}
+
 type Latest struct {
-	Smell       SensorValue `json:"smell"`
-	CO2         SensorValue `json:"co2"`
-	Temperature SensorValue `json:"temperature"`
-	Humidity    SensorValue `json:"humidity"`
+	Smell       SensorValue   `json:"smell"`
+	CO2         SensorValue   `json:"co2"`
+	Temperature SensorValue   `json:"temperature"`
+	Humidity    SensorValue   `json:"humidity"`
+	Presence    PresenceValue `json:"presence"`
 }
 
 func latestValue(table string) SensorValue {
@@ -40,12 +46,24 @@ func latestValue(table string) SensorValue {
 	return SensorValue{Value: &v, RecordedAt: &s}
 }
 
+func latestPresence() PresenceValue {
+	var loc string
+	var t time.Time
+	err := db.QueryRow("SELECT location, recorded_at FROM presence_logs ORDER BY recorded_at DESC LIMIT 1").Scan(&loc, &t)
+	if err != nil {
+		return PresenceValue{}
+	}
+	s := t.Format("2006/01/02 15:04:05")
+	return PresenceValue{Location: &loc, RecordedAt: &s}
+}
+
 func latestHandler(w http.ResponseWriter, r *http.Request) {
 	data := Latest{
 		Smell:       latestValue("smells"),
 		CO2:         latestValue("co2s"),
 		Temperature: latestValue("temperatures"),
 		Humidity:    latestValue("humidities"),
+		Presence:    latestPresence(),
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)

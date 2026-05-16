@@ -60,6 +60,13 @@
   <div id="clock"></div>
   <h1>Sensor Realtime</h1>
   <h2 style="font-size:1.1rem;color:#ccc;margin-top:0;">BLE 在室</h2>
+  <div class="readings">
+    <div class="row">
+      <div class="label">現在地</div>
+      <div class="value" id="presence">--</div>
+      <div class="recorded-at" id="presence-at"></div>
+    </div>
+  </div>
   <div class="readings" id="ble-readings"></div>
 
   <h2 style="font-size:1.1rem;color:#ccc;margin-top:2.5rem;">センサー</h2>
@@ -114,6 +121,8 @@
         setAt('co2', d.co2.recorded_at);
         setAt('temperature', d.temperature.recorded_at);
         setAt('humidity', d.humidity.recorded_at);
+        document.getElementById('presence').textContent = d.presence.location || '--';
+        setAt('presence', d.presence.recorded_at);
       } catch (_) {}
     }
 
