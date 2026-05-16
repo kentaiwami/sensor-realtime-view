@@ -59,6 +59,10 @@
 <body>
   <div id="clock"></div>
   <h1>Sensor Realtime</h1>
+  <h2 style="font-size:1.1rem;color:#ccc;margin-top:0;">BLE 在室</h2>
+  <div class="readings" id="ble-readings"></div>
+
+  <h2 style="font-size:1.1rem;color:#ccc;margin-top:2.5rem;">センサー</h2>
   <div class="readings">
     <div class="row">
       <div class="label">におい (raw)</div>
@@ -81,9 +85,6 @@
       <div class="recorded-at" id="humidity-at"></div>
     </div>
   </div>
-
-  <h2 style="font-size:1.1rem;color:#ccc;margin-top:2.5rem;">BLE 在室</h2>
-  <div class="readings" id="ble-readings"></div>
 
   <script>
     function updateClock() {
