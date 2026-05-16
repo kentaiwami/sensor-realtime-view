@@ -82,6 +82,9 @@
     </div>
   </div>
 
+  <h2 style="font-size:1.1rem;color:#ccc;margin-top:2.5rem;">BLE 在室</h2>
+  <div class="readings" id="ble-readings"></div>
+
   <script>
     function updateClock() {
       document.getElementById('clock').textContent = new Date().toLocaleString('ja-JP');
@@ -115,6 +118,24 @@
 
     setInterval(fetchLatest, 1000);
     fetchLatest();
+
+    async function fetchBle() {
+      try {
+        const res = await fetch('/api/ble');
+        if (!res.ok) return;
+        const list = await res.json();
+        const container = document.getElementById('ble-readings');
+        container.innerHTML = (list || []).map(b => `
+          <div class="row">
+            <div class="label">RSSI (${b.location})</div>
+            <div class="value">${b.rssi != null ? b.rssi + ' dBm' : '<span class="na">--</span>'}</div>
+            <div class="recorded-at">${b.recorded_at || ''}</div>
+          </div>`).join('');
+      } catch (_) {}
+    }
+
+    setInterval(fetchBle, 1000);
+    fetchBle();
   </script>
 </body>
 </html>

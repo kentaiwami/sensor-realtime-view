@@ -51,6 +51,42 @@ func latestHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
+type BleValue struct {
+	Location   string  `json:"location"`
+	RSSI       *int    `json:"rssi"`
+	RecordedAt *string `json:"recorded_at"`
+}
+
+func bleHandler(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.Query(`
+		SELECT location, rssi, recorded_at
+		FROM ble_rssi
+		WHERE (location, recorded_at) IN (
+			SELECT location, MAX(recorded_at) FROM ble_rssi GROUP BY location
+		)
+		ORDER BY location
+	`)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var result []BleValue
+	for rows.Next() {
+		var b BleValue
+		var t time.Time
+		if err := rows.Scan(&b.Location, &b.RSSI, &t); err != nil {
+			continue
+		}
+		s := t.Format("2006/01/02 15:04:05")
+		b.RecordedAt = &s
+		result = append(result, b)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
 func basicAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, pass, ok := r.BasicAuth()
@@ -97,6 +133,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 	http.Handle("/api/latest", basicAuth(http.HandlerFunc(latestHandler)))
+	http.Handle("/api/ble", basicAuth(http.HandlerFunc(bleHandler)))
 	http.Handle("/", basicAuth(http.FileServer(http.Dir("./static"))))
 
 	srv := &http.Server{Addr: ":8080"}
